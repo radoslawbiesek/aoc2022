@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-export function loadList(filename: string) {
+export function loadList(filename: string): string[] {
   const content = fs.readFileSync(path.join(__dirname, filename), {
     encoding: "utf8",
   });
@@ -10,7 +10,7 @@ export function loadList(filename: string) {
   return list;
 }
 
-export function sumCalories(list: string[], numberOfElves: number) {
+export function sumCalories(list: string[], numberOfElves: number): number {
   const sums = [0];
   list.forEach((el) => {
     if (el === "") {
