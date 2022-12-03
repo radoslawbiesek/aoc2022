@@ -1,15 +1,3 @@
-import fs from "fs";
-import path from "path";
-
-export function loadList(filename: string): string[] {
-  const content = fs.readFileSync(path.join(__dirname, filename), {
-    encoding: "utf8",
-  });
-  const list = content.split("\n");
-
-  return list;
-}
-
 export function sumCalories(list: string[], numberOfElves: number): number {
   const sums = [0];
   list.forEach((el) => {
@@ -27,6 +15,3 @@ export function sumCalories(list: string[], numberOfElves: number): number {
 
   return total;
 }
-
-console.log("Top 1: ", sumCalories(loadList("input.txt"), 1));
-console.log("Top 3: ", sumCalories(loadList("input.txt"), 3));

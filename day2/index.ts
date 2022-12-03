@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 type Shape = "rock" | "paper" | "scissors";
 type OpponentEncryptedShape = "A" | "B" | "C";
 type PlayerEncryptedHint = "X" | "Y" | "Z";
@@ -48,15 +45,6 @@ const possibleRounds: [Shape, Shape, Result][] = [
   ["scissors", "rock", "loss"],
 ];
 
-export function loadRounds(filename: string): Round[] {
-  const content = fs.readFileSync(path.join(__dirname, filename), {
-    encoding: "utf8",
-  });
-  const rounds = content.split("\n").map((round) => round.split(" "));
-
-  return rounds as Round[];
-}
-
 function calculateResult(round: Round): Result {
   const playerShape = shapeMap[round[1]];
   const opponentShape = shapeMap[round[0]];
@@ -100,23 +88,16 @@ function strategy2(round: Round): [Shape, Result] {
 }
 
 function calculateTotalPoints(strategy: (round: Round) => [Shape, Result]) {
-  return function (rounds: Round[]): number {
+  return function (list: string[]): number {
+    const rounds = list.map((item) => item.split(" ")) as Round[];
     const total = rounds.reduce(
       (sum, round) => sum + calculateRoundPoints(...strategy(round)),
       0
     );
+
     return total;
   };
 }
 
 export const calculateTotalPointsStrategy1 = calculateTotalPoints(strategy1);
 export const calculateTotalPointsStrategy2 = calculateTotalPoints(strategy2);
-
-console.log(
-  "Total points in strategy 1: ",
-  calculateTotalPointsStrategy1(loadRounds("input.txt"))
-);
-console.log(
-  "Total points in strategy 2: ",
-  calculateTotalPointsStrategy2(loadRounds("input.txt"))
-);
