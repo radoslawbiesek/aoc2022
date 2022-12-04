@@ -1,4 +1,4 @@
-type PairStr = `${number}-${number},${number}-${number}`;
+export type PairStr = `${number}-${number},${number}-${number}`;
 type Range = [number, number];
 type Pair = [Range, Range];
 
