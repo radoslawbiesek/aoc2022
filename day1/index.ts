@@ -1,7 +1,7 @@
 export function sumCalories(list: string[], numberOfElves: number): number {
   const sums = [0];
   list.forEach((el) => {
-    if (el === "") {
+    if (el === '') {
       sums.push(0);
     } else {
       sums[sums.length - 1] += Number(el);

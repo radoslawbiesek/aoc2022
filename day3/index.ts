@@ -1,30 +1,30 @@
 const LETTERS = [
-  "a",
-  "b",
-  "c",
-  "d",
-  "e",
-  "f",
-  "g",
-  "h",
-  "i",
-  "j",
-  "k",
-  "l",
-  "m",
-  "n",
-  "o",
-  "p",
-  "q",
-  "r",
-  "s",
-  "t",
-  "u",
-  "v",
-  "w",
-  "x",
-  "y",
-  "z",
+  'a',
+  'b',
+  'c',
+  'd',
+  'e',
+  'f',
+  'g',
+  'h',
+  'i',
+  'j',
+  'k',
+  'l',
+  'm',
+  'n',
+  'o',
+  'p',
+  'q',
+  'r',
+  's',
+  't',
+  'u',
+  'v',
+  'w',
+  'x',
+  'y',
+  'z',
 ];
 
 const Priority: Record<string, number> = [
@@ -40,7 +40,7 @@ function splitCompartments(rucksack: string): [string, string] {
 }
 
 function splitItems(compartment: string): string[] {
-  return compartment.split("");
+  return compartment.split('');
 }
 
 function splitGroups(list: string[]): string[][] {
@@ -87,7 +87,7 @@ function getBadgesList(list: string[]): string[] {
 
     const [largestGroup, ...rest] = groupList
       .sort((a, b) => b.length - a.length)
-      .map((g) => g.split(""));
+      .map((g) => g.split(''));
 
     largestGroup.forEach((badge) => {
       if (
