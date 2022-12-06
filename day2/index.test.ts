@@ -2,10 +2,10 @@ import {
   calculateTotalPointsStrategy1,
   calculateTotalPointsStrategy2,
 } from './index';
-import { loadList } from '../utils';
+import { readInput } from '../utils';
 
-const testList = loadList('day2/data/test-input.txt');
-const list = loadList('day2/data/input.txt');
+const testList = readInput('day2/data/test-input.txt');
+const list = readInput('day2/data/input.txt');
 
 test('day2 calculateTotalPointsStrategy1 function', () => {
   expect(calculateTotalPointsStrategy1(testList)).toBe(15);

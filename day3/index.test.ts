@@ -1,8 +1,8 @@
 import { sumDoubledItemsPriorities, sumBadgesPriorities } from './index';
-import { loadList } from '../utils';
+import { readInput } from '../utils';
 
-const testList = loadList('day3/data/test-input.txt');
-const list = loadList('day3/data/input.txt');
+const testList = readInput('day3/data/test-input.txt');
+const list = readInput('day3/data/input.txt');
 
 test('day3 sumDoubledItemsPriorities function', () => {
   expect(sumDoubledItemsPriorities(testList)).toBe(157);

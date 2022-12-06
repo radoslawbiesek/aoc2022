@@ -1,8 +1,8 @@
 import { sumCalories } from './index';
-import { loadList } from '../utils';
+import { readInput } from '../utils';
 
-const testList = loadList('day1/data/test-input.txt');
-const list = loadList('day1/data/input.txt');
+const testList = readInput('day1/data/test-input.txt');
+const list = readInput('day1/data/input.txt');
 
 test('day1 sumCalories function', () => {
   expect(sumCalories(testList, 1)).toBe(24000);

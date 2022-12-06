@@ -1,8 +1,8 @@
-import { loadList } from '../utils';
+import { readInput } from '../utils';
 import { findTopCrates } from './index';
 
-const testList = loadList('day5/data/test-input.txt');
-const list = loadList('day5/data/input.txt');
+const testList = readInput('day5/data/test-input.txt');
+const list = readInput('day5/data/input.txt');
 
 test('day5', () => {
   expect(findTopCrates(testList)).toBe('CMZ');

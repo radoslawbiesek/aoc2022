@@ -3,10 +3,10 @@ import {
   countPartiallyOverlappingPairs,
   PairStr,
 } from './index';
-import { loadList } from '../utils';
+import { readInput } from '../utils';
 
-const testList = loadList('day4/data/test-input.txt') as PairStr[];
-const list = loadList('day4/data/input.txt') as PairStr[];
+const testList = readInput('day4/data/test-input.txt') as PairStr[];
+const list = readInput('day4/data/input.txt') as PairStr[];
 
 test('day4 countFullyOverlappingPairs function', () => {
   expect(countFullyOverlappingPairs(testList)).toBe(2);
