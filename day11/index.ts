@@ -1,29 +1,57 @@
+type AllowedOperation =
+  | { sign: '+'; value: number }
+  | { sign: '*'; value: number }
+  | { sign: '**'; value: 2 };
+
+class Operation {
+  public operation: AllowedOperation;
+
+  constructor(operationStr: string) {
+    const [, sign, value] = operationStr.split('=')[1].trim().split(' ');
+    if (value === 'old') {
+      this.operation = {
+        sign: '**',
+        value: 2,
+      };
+    } else {
+      this.operation = {
+        sign: sign.trim(),
+        value: Number(value),
+      } as AllowedOperation;
+    }
+  }
+
+  execute(num: number): number {
+    if (this.operation.sign === '+') {
+      return num + this.operation.value;
+    } else if (this.operation.sign === '**') {
+      return num ** this.operation.value;
+    } else {
+      return num * this.operation.value;
+    }
+  }
+}
+
 class Monkey {
   public inspected = 0;
+  private operation: Operation;
 
   constructor(
     public index: number,
     public items: number[],
-    private operation: string,
+    operationStr: string,
     public divisor: number,
     private trueTarget: number,
     private falseTarget: number,
     public monkeys: Monkey[]
-  ) {}
+  ) {
+    this.operation = new Operation(operationStr);
+  }
 
   inspectItem(item: number): [newItem: number, target: number] {
-    const [, sign, value] = this.operation.split(' ');
     let newItem = item;
-    if (sign.trim() === '+') {
-      newItem += Number(value);
-    } else if (sign.trim() === '*') {
-      if (value.trim() === 'old') {
-        newItem = newItem * newItem;
-      } else {
-        newItem = newItem * Number(value);
-      }
-    }
 
+    newItem = this.operation.execute(newItem);
     newItem = this.reduce(newItem);
 
     const target =
@@ -68,7 +96,7 @@ function createMonkeys(list: string[], conctructor: typeof Monkey): Monkey[] {
   list.forEach((monkeyStr, index) => {
     const arr = monkeyStr.split('\n');
     const items = arr[1].split(':')[1].split(',').map(Number);
-    const operationStr = arr[2].split('=')[1].trim();
+    const operationStr = arr[2];
     const divisor = Number(arr[3].split(' ').reverse()[0]);
     const trueTarget = Number(arr[4].split(' ').reverse()[0]);
     const falseTarget = Number(arr[5].split(' ').reverse()[0]);
