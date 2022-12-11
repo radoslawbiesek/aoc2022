@@ -1,10 +1,10 @@
 import { readInput } from '../utils';
 import { findTopCrates } from './index';
 
-const testList = readInput('day5/data/test-input.txt');
-const list = readInput('day5/data/input.txt');
+const testList = readInput('day05/data/test-input.txt');
+const list = readInput('day05/data/input.txt');
 
-test('day5', () => {
+test('day05', () => {
   expect(findTopCrates(testList)).toBe('CMZ');
   expect(findTopCrates(list)).toBe('SPFMVDTZT');
 

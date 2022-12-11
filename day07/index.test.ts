@@ -1,10 +1,10 @@
 import { readInput } from '../utils';
 import { findTotalSum, findDirectoryToDelete } from './index';
 
-const testList = readInput('day7/data/test-input.txt');
-const list = readInput('day7/data/input.txt');
+const testList = readInput('day07/data/test-input.txt');
+const list = readInput('day07/data/input.txt');
 
-test('day7', () => {
+test('day07', () => {
   expect(findTotalSum(testList)).toBe(95437);
   expect(findTotalSum(list)).toBe(1391690);
 

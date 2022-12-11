@@ -9,7 +9,7 @@ test('day10 findTotalSignalStrength', () => {
   expect(findTotalSignalStrength(list)).toBe(15140);
 });
 
-test('day10', () => {
+test('da010', () => {
   expect(drawImage(testList)).toMatchInlineSnapshot(`
 "
 ##..##..##..##..##..##..##..##..##..##..
