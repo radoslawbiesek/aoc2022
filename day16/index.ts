@@ -114,13 +114,35 @@ function transformGraph(valves: Valve[], graph: AdjList): AdjList {
   return newGraph;
 }
 
-class Branch {
-  constructor(
-    public currentValve: number,
-    public totalPressure: number,
-    public timeRemaining: number,
-    public openedValves: number[]
-  ) {}
+function walk(
+  graph: AdjList,
+  maxPressure: { value: number },
+  current: number,
+  totalPressure: number,
+  timeRemaining: number,
+  openedValves: number[]
+) {
+  const possiblePaths = graph[current].filter(
+    (p) => !openedValves.includes(p.to) && p.distance + 1 < timeRemaining
+  );
+
+  if (!possiblePaths.length) {
+    if (totalPressure > maxPressure.value) {
+      maxPressure.value = totalPressure;
+    }
+    return;
+  }
+
+  possiblePaths.forEach((path) =>
+    walk(
+      graph,
+      maxPressure,
+      path.to,
+      totalPressure + (timeRemaining - path.distance - 1) * path.value,
+      timeRemaining - path.distance - 1,
+      [...openedValves, current]
+    )
+  );
 }
 
 export function findTotalPressure(list: string[]): number {
@@ -133,39 +155,9 @@ export function findTotalPressure(list: string[]): number {
   const SOURCE_INDEX = 0;
   const TOTAL_TIME = 30;
 
-  let queue: Branch[] = [];
-  let maxTotalPressure = 0;
+  const maxPressure = { value: 0 };
 
-  queue.push(new Branch(SOURCE_INDEX, 0, TOTAL_TIME, [SOURCE_INDEX]));
+  walk(transformedGraph, maxPressure, SOURCE_INDEX, 0, TOTAL_TIME, []);
 
-  while (queue.length) {
-    const { currentValve, timeRemaining, totalPressure, openedValves } =
-      queue.shift() as Branch;
-
-    const possiblePaths = transformedGraph[currentValve].filter((path) => {
-      return (
-        !openedValves.includes(path.to) && path.distance + 1 < timeRemaining
-      );
-    });
-
-    if (!possiblePaths.length) {
-      // branch is ended
-      if (totalPressure > maxTotalPressure) {
-        maxTotalPressure = totalPressure;
-      }
-    } else {
-      possiblePaths.forEach((path) => {
-        queue.push(
-          new Branch(
-            path.to,
-            totalPressure + (timeRemaining - path.distance - 1) * path.value,
-            timeRemaining - path.distance - 1,
-            [...openedValves, currentValve]
-          )
-        );
-      });
-    }
-  }
-
-  return maxTotalPressure;
+  return maxPressure.value;
 }
