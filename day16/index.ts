@@ -123,7 +123,7 @@ function walk(
   openedValves: number[]
 ) {
   const possiblePaths = graph[current].filter(
-    (p) => !openedValves.includes(p.to) && p.distance + 1 < timeRemaining
+    (p) => !openedValves.includes(p.to) && p.distance + 1 <= timeRemaining
   );
 
   if (!possiblePaths.length) {
@@ -158,6 +158,196 @@ export function findTotalPressure(list: string[]): number {
   const maxPressure = { value: 0 };
 
   walk(transformedGraph, maxPressure, SOURCE_INDEX, 0, TOTAL_TIME, []);
+
+  return maxPressure.value;
+}
+
+function walkWithElephant(
+  graph: AdjList,
+  maxPressure: { value: number },
+  target1: Adj | null,
+  target2: Adj | null,
+  timeLeft1: number,
+  timeLeft2: number,
+  timeRemaining: number,
+  totalPressure: number,
+  openedValves: number[]
+): void {
+  if (timeRemaining <= 0 || (!target1 && !target2)) {
+    return;
+  }
+
+  if (timeLeft1 !== 0 && timeLeft2 !== 0) {
+    let diff: number;
+    if (target1 && target2) {
+      diff = Math.min(timeLeft1, timeLeft2);
+    } else if (target1) {
+      diff = timeLeft1;
+    } else if (target2) {
+      diff = timeLeft2;
+    } else {
+      return;
+    }
+    walkWithElephant(
+      graph,
+      maxPressure,
+      target1,
+      target2,
+      timeLeft1 - diff,
+      timeLeft2 - diff,
+      timeRemaining - diff,
+      totalPressure,
+      openedValves
+    );
+    return;
+  }
+
+  let newTotalPressure = totalPressure;
+  let nextTarget1 = target1;
+  let nextTarget2 = target2;
+
+  if (timeLeft1 === 0 && target1) {
+    newTotalPressure += timeRemaining * target1.value;
+    nextTarget1 = null;
+  }
+
+  if (timeLeft2 === 0 && target2) {
+    newTotalPressure += timeRemaining * target2.value;
+    nextTarget2 = null;
+  }
+
+  if (newTotalPressure > maxPressure.value) {
+    maxPressure.value = newTotalPressure;
+  }
+
+  const getPossiblePaths = (target: Adj, otherTarget?: Adj) =>
+    graph[target.to].filter(
+      (p) => !openedValves.includes(p.to) && p.distance + 1 <= timeRemaining
+    );
+
+  if (timeLeft1 === 0 && target1 && timeLeft2 === 0 && target2) {
+    const possiblePaths1 = getPossiblePaths(target1);
+    const possiblePaths2 = getPossiblePaths(target2);
+
+    const possibleVariants =
+      possiblePaths1.length &&
+      possiblePaths2.length &&
+      new Set([...possiblePaths1, ...possiblePaths2]).size >
+        Math.max(possiblePaths1.length, possiblePaths2.length);
+
+    if (possibleVariants) {
+      possiblePaths1.forEach((path1) => {
+        possiblePaths2.forEach((path2) => {
+          if (path1.to !== path2.to) {
+            walkWithElephant(
+              graph,
+              maxPressure,
+              path1,
+              path2,
+              path1.distance + 1,
+              path2.distance + 1,
+              timeRemaining,
+              newTotalPressure,
+              [...openedValves, path1.to, path2.to]
+            );
+          }
+        });
+      });
+      return;
+    }
+  }
+
+  if (timeLeft1 === 0 && target1) {
+    const possiblePaths1 = getPossiblePaths(target1);
+
+    possiblePaths1.forEach((path1) => {
+      walkWithElephant(
+        graph,
+        maxPressure,
+        path1,
+        nextTarget2,
+        path1.distance + 1,
+        timeLeft2,
+        timeRemaining,
+        newTotalPressure,
+        [...openedValves, path1.to]
+      );
+    });
+    if (!possiblePaths1.length && nextTarget2) {
+      walkWithElephant(
+        graph,
+        maxPressure,
+        null,
+        target2,
+        Infinity,
+        timeLeft2,
+        timeRemaining,
+        newTotalPressure,
+        [...openedValves]
+      );
+    }
+  }
+
+  if (timeLeft2 === 0 && target2) {
+    const possiblePaths2 = getPossiblePaths(target2);
+    possiblePaths2.forEach((path2) => {
+      walkWithElephant(
+        graph,
+        maxPressure,
+        nextTarget1,
+        path2,
+        timeLeft1,
+        path2.distance + 1,
+        timeRemaining,
+        newTotalPressure,
+        [...openedValves, path2.to]
+      );
+    });
+    if (!possiblePaths2.length && nextTarget1) {
+      walkWithElephant(
+        graph,
+        maxPressure,
+        nextTarget1,
+        null,
+        timeLeft1,
+        Infinity,
+        timeRemaining,
+        newTotalPressure,
+        [...openedValves]
+      );
+    }
+  }
+}
+
+export function findTotalPressure2(list: string[]): number {
+  const valves = parseInput(list);
+  const valvesGraph = createAdjList(valves);
+
+  const nonZeroValves = valves.filter((v) => v.flowRate > 0 || v.name === 'AA'); // valves are sorted
+  const transformedGraph = transformGraph(nonZeroValves, valvesGraph);
+
+  const SOURCE_INDEX = 0;
+  const TOTAL_TIME = 26;
+  const maxPressure = { value: 0 };
+
+  const source = transformedGraph[SOURCE_INDEX];
+
+  for (let i = 0; i < source.length - 1; i++) {
+    const target1 = source[i];
+    const target2 = source[i + 1];
+
+    walkWithElephant(
+      transformedGraph,
+      maxPressure,
+      target1,
+      target2,
+      target1.distance + 1,
+      target2.distance + 1,
+      TOTAL_TIME,
+      0,
+      [SOURCE_INDEX, target1.to, target2.to]
+    );
+  }
 
   return maxPressure.value;
 }
