@@ -21,6 +21,7 @@ class Cave {
         this.grid.push(Array(CAVE_WIDTH).fill('.'));
       }
     }
+
     this.height = newHeight + this.cutRowsCount;
   }
 
@@ -73,6 +74,15 @@ class Cave {
 
     this.updateHeight();
     this.cutRows();
+  }
+
+  top5Stringified(): string {
+    const firstEmpty = this.grid.findIndex((row) => !row.includes('#'));
+
+    return this.grid
+      .slice(firstEmpty - 5, firstEmpty)
+      .map((row) => row.join(''))
+      .join('/');
   }
 }
 
@@ -200,13 +210,14 @@ export function calculateHeight(input: string, maxRocks: number): number {
   const cave = new Cave();
   const directions = input.split('') as Direction[];
   let directionsCount = 0;
-
   let rocksCount = 0;
+
   while (rocksCount < maxRocks) {
     const RockType = RockTypes[rocksCount % RockTypes.length];
     const rock = new RockType(cave);
 
     let landed = false;
+
     while (!landed) {
       const direction = directions[directionsCount % directions.length];
       direction === '<' ? rock.moveLeft() : rock.moveRight();
@@ -217,6 +228,69 @@ export function calculateHeight(input: string, maxRocks: number): number {
 
     cave.landRock(rock.area);
     rocksCount++;
+  }
+
+  return cave.height;
+}
+
+export function calculateHeight2(input: string, maxRocks: number): number {
+  const cave = new Cave();
+  const directions = input.split('') as Direction[];
+  let directionsCount = 0;
+  let rocksCount = 0;
+
+  const states: Set<string> = new Set();
+  const cycles: [rocksCount: number, height: number][] = [];
+  let firstFound = '';
+  let increased = false;
+
+  while (rocksCount < maxRocks) {
+    const RockType = RockTypes[rocksCount % RockTypes.length];
+    const rock = new RockType(cave);
+
+    let landed = false;
+
+    while (!landed) {
+      const direction = directions[directionsCount % directions.length];
+      direction === '<' ? rock.moveLeft() : rock.moveRight();
+      directionsCount++;
+
+      landed = !rock.moveDown();
+    }
+
+    const stringified = `
+    ${rocksCount % RockTypes.length}-
+    ${directionsCount % directions.length}-
+    ${cave.top5Stringified()}
+    `;
+
+    if (states.has(stringified) && !firstFound) {
+      firstFound = stringified;
+    }
+
+    if (stringified === firstFound) {
+      cycles.push([rocksCount, cave.height]);
+    }
+
+    states.add(stringified);
+
+    cave.landRock(rock.area);
+    rocksCount++;
+
+    // first found is an offset
+    if (cycles.length === 3 && !increased) {
+      const rocksInterval = cycles[2][0] - cycles[1][0];
+      const heightDiff = cycles[2][1] - cycles[1][1];
+
+      const left = maxRocks - rocksCount;
+      const fullCycles = Math.floor(left / rocksInterval);
+
+      cave.height += fullCycles * heightDiff;
+      cave.cutRowsCount += fullCycles * heightDiff;
+      rocksCount += fullCycles * rocksInterval;
+
+      increased = true;
+    }
   }
 
   return cave.height;
