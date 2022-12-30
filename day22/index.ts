@@ -23,63 +23,12 @@ const directionsMap: Record<Direction, Record<Rotation, Direction>> = {
   },
 };
 
-class Node<T> {
-  public next!: Node<T>;
-  public previous!: Node<T>;
-  constructor(public value: T) {}
-}
-
-class List<T> {
-  public root: Node<T>;
-  constructor(arr: T[]) {
-    if (!arr.length) throw Error();
-
-    this.root = new Node(arr[0]);
-    let current: Node<T> = this.root;
-
-    arr.slice(1).forEach((value) => {
-      const node = new Node(value);
-      current.next = node;
-      node.previous = current;
-      current = node;
-    });
-
-    this.root.previous = current;
-    current.next = this.root;
-  }
-
-  toArr(): T[] {
-    const arr: Node<T>[] = [this.root];
-    let current = this.root.next;
-
-    while (current !== this.root) {
-      if (current) {
-        arr.push(current);
-        current = current.next;
-      }
-    }
-
-    return arr.map(({ value }) => value);
-  }
-
-  find(fn: (value: T) => boolean): Node<T> | undefined {
-    let current = this.root;
-
-    do {
-      if (fn(current.value)) {
-        return current;
-      }
-      current = current.next;
-    } while (current !== this.root);
-  }
+function* stepsGenerator<T>(steps: T[]) {
+  while (true) yield* steps;
 }
 
 function isNumber(str: string): boolean {
   return str === String(Number(str));
-}
-
-function isEqual(pos1: Position, pos2: Position): boolean {
-  return pos1[0] === pos2[0] && pos1[1] === pos2[1];
 }
 
 function parseInput(input: string[]): [Grid, Description] {
@@ -124,29 +73,42 @@ function turn(currDirection: Direction, letter: 'L' | 'R'): Direction {
   return directionsMap[currDirection][letter];
 }
 
+function isEqual(pos1: Position, pos2: Position): boolean {
+  return pos1[0] === pos2[0] && pos1[1] === pos2[1];
+}
+
 function walk(
   map: Grid,
   currPosition: Position,
   direction: Direction,
-  steps: number
+  stepsNumber: number
 ): Position {
   let newPosition: Position = currPosition;
 
-  const list = new List(
+  let stepsArr: Grid = [];
+  const tiles: Grid =
     direction === 'right' || direction === 'left'
       ? map.filter(({ position: [, y] }) => y === newPosition[1]) // row
-      : map.filter(({ position: [x] }) => x === currPosition[0]) // column
-  );
-  let current = list.find(({ position }) => isEqual(position, currPosition))!;
+      : map.filter(({ position: [x] }) => x === currPosition[0]); // column
 
-  for (let i = 0; i < steps; i++) {
-    const nextTile =
-      direction === 'right' || direction === 'down'
-        ? current.next
-        : current.previous;
-    if (nextTile.value.tile === '#') break;
-    current = nextTile;
-    newPosition = current.value.position;
+  const currentIndex = tiles.findIndex((v) =>
+    isEqual(v.position, currPosition)
+  );
+  const before = tiles.slice(0, currentIndex);
+  const after = tiles.slice(currentIndex + 1);
+
+  if (direction === 'right' || direction === 'down') {
+    stepsArr = [...after, ...before, tiles[currentIndex]];
+  } else {
+    stepsArr = [...before.reverse(), ...after.reverse(), tiles[currentIndex]];
+  }
+
+  const steps = stepsGenerator(stepsArr);
+
+  for (let i = 0; i < stepsNumber; i++) {
+    const next = steps.next().value!;
+    if (next.tile === '#') break;
+    newPosition = next.position;
   }
 
   return newPosition;
