@@ -9,5 +9,5 @@ test('day16', () => {
   expect(findTotalPressure(list)).toBe(2181);
 
   expect(findTotalPressure2(testList)).toBe(1707);
-  expect(findTotalPressure2(list)).toBe(2606);
+  expect(findTotalPressure2(list)).toBe(2824);
 });
