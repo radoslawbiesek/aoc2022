@@ -100,12 +100,16 @@ function reorder<T>(arr: T[], index: number, reverse = false): T[] {
   }
 }
 
-function filterRow(map: Grid, y: number): Grid {
-  return map.filter(({ position }) => position[1] === y);
+function row(y: number) {
+  return function (el: Grid[number]): boolean {
+    return el.position[1] === y;
+  };
 }
 
-function filterColumn(map: Grid, x: number): Grid {
-  return map.filter(({ position }) => position[0] === x);
+function column(x: number) {
+  return function (el: Grid[number]): boolean {
+    return el.position[0] === x;
+  };
 }
 
 function prepareSteps(
@@ -117,8 +121,8 @@ function prepareSteps(
   let stepsArr: Grid = [];
   const tiles: Grid =
     direction === 'right' || direction === 'left'
-      ? filterRow(map, y)
-      : filterColumn(map, x);
+      ? map.filter(row(y))
+      : map.filter(column(x));
 
   const currentIndex = tiles.findIndex((v) =>
     isEqual(v.position, currPosition)
@@ -155,7 +159,7 @@ function _diffStart(faceSize: number) {
 
 function _diffEnd(faceSize: number) {
   return function (faceCount: number, position: number) {
-    return faceCount * faceSize - 1 - position;
+    return (faceCount + 1) * faceSize - 1 - position;
   };
 }
 
@@ -184,17 +188,30 @@ function _detectFace(
   };
 }
 
+function withDirection(
+  currDirection: Direction,
+  letter: 'L' | 'R' = 'L',
+  times = 0
+) {
+  return function <T>(value: T) {
+    return {
+      ...value,
+      direction: turn(currDirection, letter, times),
+    };
+  };
+}
+
 // Test input
 
 const FACE_SIZE_T = 4;
 
 const detectFaceT = _detectFace(FACE_SIZE_T, {
-  1: [2, 0], // 1
-  2: [0, 1], // 2
-  3: [1, 1], // 3
-  4: [2, 1], // 4
-  5: [2, 2], // 5
-  6: [3, 2], // 6
+  1: [2, 0],
+  2: [0, 1],
+  3: [1, 1],
+  4: [2, 1],
+  5: [2, 2],
+  6: [3, 2],
 });
 
 const fromStartT = _fromStart(FACE_SIZE_T);
@@ -214,52 +231,185 @@ function prepareStepsCubeT(
 
   // only used cases are handled
   if (currDirection === 'down' || currDirection === 'up') {
-    tiles = [
-      ...filterColumn(map, x).map((v) => ({ ...v, direction: currDirection })),
-    ];
+    tiles = [...map.filter(column(x)).map(withDirection(currDirection))];
     switch (currentFace) {
       case 1:
       case 4:
       case 5:
         tiles = [
           ...tiles, // col 1,4,5
-          ...filterColumn(map, fromEndT(0, diffStartT(2, x)))
+          ...map
+            .filter(column(fromEndT(0, diffStartT(2, x))))
             .reverse()
-            .map((v) => ({
-              ...v,
-              direction: turn(currDirection, 'L', 2),
-            })), // col 2
+            .map(withDirection(currDirection, 'L', 2)), // col 2
         ];
+
+        break;
       case 3:
         tiles = [
           ...tiles, // col 3
-          ...filterRow(map, fromStartT(2, diffEndT(2, x))).map((v) => ({
-            ...v,
-            direction: turn(currDirection, 'L', 1),
-          })), // row 5,6
-          ...filterRow(map, fromEndT(0, diffEndT(2, x)))
+          ...map
+            .filter(row(fromStartT(2, diffEndT(2, x))))
+            .map(withDirection(currDirection, 'L', 1)), // row 5,6
+          ...map
+            .filter(row(fromEndT(0, diffEndT(2, x))))
             .reverse()
-            .map((v) => ({
-              ...v,
-              direction: turn(currDirection, 'L', 3),
-            })), // row 1
+            .map(withDirection(currDirection, 'L', 3)), // row 1
         ];
+
+        break;
     }
   } else {
-    tiles = [
-      ...filterRow(map, y).map((v) => ({ ...v, direction: currDirection })),
-    ];
+    tiles = [...map.filter(row(y)).map(withDirection(currDirection))];
     switch (currentFace) {
       case 2:
       case 3:
       case 4:
         tiles = [
           ...tiles, // row 2, 3, 4
-          ...filterColumn(map, fromEndT(3, diffStartT(1, y))).map((v) => ({
-            ...v,
-            direction: turn(currDirection, 'R', 1),
-          })), // col 6
+          ...map
+            .filter(column(fromEndT(3, diffStartT(1, y))))
+            .map(withDirection(currDirection, 'R', 1)), // col 6
         ];
+
+        break;
+    }
+  }
+
+  const currentIndex = tiles.findIndex((v) =>
+    isEqual(v.position, currPosition)
+  );
+
+  const stepsArr = reorder(
+    tiles,
+    currentIndex,
+    currDirection === 'left' || currDirection === 'up'
+  );
+  const steps = stepsGenerator(stepsArr);
+
+  return steps;
+}
+
+// Input
+
+const FACE_SIZE = 50;
+
+const detectFace = _detectFace(FACE_SIZE, {
+  1: [1, 0],
+  2: [2, 0],
+  3: [1, 1],
+  4: [0, 2],
+  5: [1, 2],
+  6: [0, 3],
+});
+
+const fromStart = _fromStart(FACE_SIZE);
+const fromEnd = _fromEnd(FACE_SIZE);
+const diffStart = _diffStart(FACE_SIZE);
+const diffEnd = _diffEnd(FACE_SIZE);
+
+function prepareStepsCube(
+  map: Grid,
+  currPosition: Position,
+  currDirection: Direction
+): Generator<GridEl & { direction?: Direction }> {
+  const currentFace = detectFace(currPosition);
+
+  let tiles: (GridEl & { direction?: Direction })[] = [];
+  const [x, y] = currPosition;
+
+  if (currDirection === 'down' || currDirection === 'up') {
+    tiles = [...map.filter(column(x)).map(withDirection(currDirection))];
+    switch (currentFace) {
+      case 1:
+      case 3:
+      case 5:
+        tiles = [
+          ...tiles, // col 1,3,5
+          ...map
+            .filter(row(fromStart(3, diffStart(1, x))))
+            .reverse()
+            .map(withDirection(currDirection, 'R', 1)), // row 6
+        ];
+        break;
+
+      case 4:
+      case 6:
+        tiles = [
+          ...tiles, // col 4,6
+          ...map
+            .filter(column(fromStart(2, diffStart(0, x))))
+            .map(withDirection(currDirection)), // col 2,
+          ...map
+            .filter(row(fromStart(1, diffStart(0, x))))
+            .map(withDirection(currDirection, 'R', 1)), // row 3
+        ];
+        break;
+
+      case 2:
+        tiles = [
+          ...tiles, // col 2
+          ...map
+            .filter(row(fromStart(1, diffStart(2, x))))
+            .map(withDirection(currDirection, 'R', 1)), // row 3
+          ...map
+            .filter(column(fromStart(0, diffStart(2, x))))
+            .map(withDirection(currDirection)), // column 4,6
+        ];
+        break;
+    }
+  } else {
+    tiles = [...map.filter(row(y)).map(withDirection(currDirection))];
+    switch (currentFace) {
+      case 1:
+      case 2: {
+        tiles = [
+          ...tiles, // row 1,2
+          ...map
+            .filter(row(fromEnd(2, diffStart(0, y))))
+            .reverse()
+            .map(withDirection(currDirection, 'R', 2)), // row 5,4
+        ];
+        break;
+      }
+
+      case 3: {
+        tiles = [
+          ...tiles, // row 3,
+          ...map
+            .filter(column(fromEnd(2, diffEnd(1, y))))
+            .reverse()
+            .map(withDirection(currDirection, 'L', 1)), // col 2
+          ...map
+            .filter(column(fromEnd(0, diffEnd(1, y))))
+            .reverse()
+            .map(withDirection(currDirection, 'L', 1)), // col 6,4
+        ];
+        break;
+      }
+
+      case 4:
+      case 5: {
+        tiles = [
+          ...tiles, // row 4,5
+          ...map
+            .filter(row(fromEnd(0, diffStart(2, y))))
+            .reverse()
+            .map(withDirection(currDirection, 'L', 2)), // row 2,1
+        ];
+        break;
+      }
+
+      case 6: {
+        tiles = [
+          ...tiles, // row 6
+          ...map
+            .filter(column(fromStart(1, diffStart(3, y))))
+            .reverse()
+            .map(withDirection(currDirection, 'L', 1)), // column 5,3,1
+        ];
+        break;
+      }
     }
   }
 
@@ -346,3 +496,4 @@ function _solution(
 
 export const solution = _solution(prepareSteps);
 export const solution2t = _solution(prepareStepsCubeT);
+export const solution2 = _solution(prepareStepsCube);
